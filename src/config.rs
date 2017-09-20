@@ -1181,10 +1181,18 @@ impl Config {
     }
 
     pub fn load_from<P: Into<PathBuf>>(path: P) -> Result<Config> {
-        let path = path.into();
+        let mut path = path.into();
         let raw = Config::read_file(path.as_path())?;
         let mut config: Config = serde_yaml::from_str(&raw)?;
-        config.config_path = Some(path);
+        config.config_path = Some(path.clone());
+
+        // try to load colors from alacritty_colors.yml
+        path.set_file_name("alacritty_colors.yml");
+        if path.exists() {
+            let raw = Config::read_file(path.as_path())?;
+            let mut color_cfg: Config = serde_yaml::from_str(&raw)?;
+            config.colors = color_cfg.colors;
+        }
 
         Ok(config)
     }
